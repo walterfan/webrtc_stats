@@ -2,6 +2,9 @@
 
 It is a python script to parse the dump file of webrtc-internals
 
+# Progress
+
+30%, will add a simple web app for query metrics and draw related chart
 
 # Metrics
 
