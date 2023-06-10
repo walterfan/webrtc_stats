@@ -13,6 +13,7 @@ from pytz import timezone
 import numpy as np
 import pandas as pd
 from ast import literal_eval
+from tabulate import tabulate
 
 TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
 
@@ -48,14 +49,17 @@ def create_df_from_values(row):
         return df
 
     if type(values) != list:
+        print("not list")
         return df
 
     if all(element == 0 for element in values):
+        #print("all is zero")
         return df
 
     time_points = generate_time_series(str2time(row["startTime"]), len(values))
-    df =  pd.DataFrame(values)
+    df =  pd.DataFrame()
     df["timestamp"] = time_points
+    df["value"] = values
     return df
 
 class WebrtcInternalsAnalyzer:
@@ -106,10 +110,28 @@ class WebrtcInternalsAnalyzer:
         return ret
 
     def get_stats_by_id_name(self, id, name):
-        key = "{}-{}".format(id, name)
-        filter1 = self._webrtc_stats[self._webrtc_stats["key"] == key]
-        ret = self._webrtc_stats[filter1][["key", "values", "startTime", "endTime"]]
+        filter1 = self._webrtc_stats["name"] == name
+        filter2 = self._webrtc_stats["id"] == id
+        ret = self._webrtc_stats[filter1 & filter2][["key", "values", "startTime", "endTime"]]
         return ret
+
+    def get_stats_by_type_id(self, statsType, statsId):
+        filter1 = self._webrtc_stats["statsType"] == statsType
+        filter2 = self._webrtc_stats["id"] == statsId
+        ret = self._webrtc_stats[filter1 & filter2][["key", "values", "startTime", "endTime"]]
+        return ret
+
+
+    def get_unique_value(self, stats_id, stats_name):
+
+        stats_df = self.get_stats_by_id_name(stats_id, stats_name)
+        values_df = create_df_from_values(stats_df.squeeze())
+        stats_values = pd.unique(values_df["value"])
+        if len(stats_values) == 1:
+            stats_value = stats_values[0]
+            return stats_value
+
+        return None
 
     def parse(self, file_name):
         with open(file_name, 'r', encoding='utf_8') as f:
@@ -160,23 +182,25 @@ if __name__ == "__main__":
 
     if not args.input_file:
         print('error: required input file')
-        print("e.g.: ./webrtc_internals_analyze.py -i samples/receiver_webrtc_internals_dump.txt")
+        print("e.g.: ./webrtc_internals_analyzer.py -i samples/receiver_webrtc_internals_dump.txt")
         exit(0)
 
     # judge if json file or not and parse it
     analyzer = WebrtcInternalsAnalyzer()
     analyzer.parse(args.input_file)
+    line_separator = '-' * 30
+    print(f"\n{line_separator} webrtc media stats {line_separator}")
     print(analyzer.get_webrtc_stats())
 
-    print("{} webrtc stats ids {}".format('-' * 20, '-' * 20))
+    print(f"\n{line_separator} webrtc stats ids {line_separator}")
     for statsType in getWebrtcStatsTypes():
-        print("*", statsType, ":", analyzer.get_stats_ids(statsType))
-    #print(json.dumps(pc_stats, indent=2))
+        stats_ids = analyzer.get_stats_ids(statsType)
+        print("*", statsType, ":", stats_ids.tolist())
 
-    print("{} media stats {}".format('-' * 20, '-' * 20))
-    print(analyzer.get_media_stats().keys())
-
-    print("{} inbound-rtp bytesReceived_in_bits/s {}".format('-' * 20, '-' * 20))
-    metric_type_name = ("inbound-rtp", "[bytesReceived_in_bits/s]")
-    print(metric_type_name)
-    print(analyzer.get_stats_by_type_name(metric_type_name[0], metric_type_name[1]))
+    metric_type_names = [
+        ("inbound-rtp", "[bytesReceived_in_bits/s]"),
+        ("outbound-rtp", "[bytesSent_in_bits/s]")
+    ]
+    for metric_type_name in metric_type_names:
+        print(f"\n{line_separator} {metric_type_name} {line_separator}")
+        print(analyzer.get_stats_by_type_name(metric_type_name[0], metric_type_name[1]))

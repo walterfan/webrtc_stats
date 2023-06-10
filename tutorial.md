@@ -127,3 +127,4 @@ tc qdisc show  dev eth0
 * https://www.w3.org/TR/webrtc-stats
 * [https://nshipster.com/network-link-conditioner/#installation](https://nshipster.com/network-link-conditioner/#installation)
 * https://www.linux.org/docs/man8/tc-netem.html
+* https://testrtc.com/webrtc-internals-parameters/

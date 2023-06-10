@@ -1,0 +1,27 @@
+media_stats:
+  inbound-rtp:
+    - bytesReceived_in_bits/s
+    - packetsReceived/s
+    - frameWidth
+    - framesPerSecond
+    - framesDecoded
+    - framesDecoded/s
+    - keyFramesDecoded
+    - nackCount
+    - pliCount
+  outbound-rtp:
+    - bytesSent_in_bits/s
+    - packetsSent/s
+    - retransmittedPacketsSent/s
+    - nackCount
+    - pliCount
+    - frameWidth
+    - framesPerSecond
+    - framesEncoded
+    - framesEncoded/s
+    - keyFramesEncoded
+  remote-inbound-rtp:
+    - jitter
+    - roundTripTime
+    - fractionLost
+    - packetsLost
