@@ -3,10 +3,8 @@
 import argparse
 from copy import deepcopy
 from datetime import datetime, timedelta
-import json
 import os
-import sys
-import pprint
+import json
 import matplotlib.pyplot as plt
 from matplotlib import dates
 from pytz import timezone
@@ -14,15 +12,13 @@ import numpy as np
 import pandas as pd
 from ast import literal_eval
 from tabulate import tabulate
+from . import analyze_util
 
-TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+logger = analyze_util.get_logger(os.path.basename(__file__))
 
 def getWebrtcStatsTypes():
     statsTypes = "inbound-rtp,outbound-rtp,remote-inbound-rtp,transport,candidate-pair,local-candidate,remote-candidate"
     return statsTypes.split(',')
-
-def str2time(str):
-    return datetime.strptime(str, TIME_FORMAT).astimezone(timezone('UTC'))
 
 def generate_time_series(start_time, num_points, interval=timedelta(seconds=1)):
     timestamps = []
@@ -56,7 +52,7 @@ def create_df_from_values(row):
         #print("all is zero")
         return df
 
-    time_points = generate_time_series(str2time(row["startTime"]), len(values))
+    time_points = generate_time_series(analyze_util.str2time(row["startTime"]), len(values))
     df =  pd.DataFrame()
     df["timestamp"] = time_points
     df["value"] = values
@@ -67,12 +63,13 @@ class WebrtcInternalsAnalyzer:
        Put webrtc stats into pandas DataFrame
     """
     def __init__(self):
-        self.time_interval_sec = 1
+
         self._webrtc_internals = {}
 
         # a data frame: key (id-name), values, statsType, startTime, endTime
         self._webrtc_stats = pd.DataFrame()
         self._webrtc_events = pd.DataFrame()
+
         # dict of array for media stats
         self._pc_stats = []
         # dict of array for media events
@@ -135,11 +132,12 @@ class WebrtcInternalsAnalyzer:
 
     def parse(self, file_name):
         with open(file_name, 'r', encoding='utf_8') as f:
+            logger.info(f"open {file_name}")
             self._webrtc_internals = {}
             try:
                 self._webrtc_internals = json.load(f)
             except:
-                print('not a json file {}'.format(file_name))
+                logger.errror('not a json file {}'.format(file_name))
 
             for pcKey, pcValue in self._webrtc_internals['PeerConnections'].items():
                 pcStats = pcValue["stats"]
@@ -166,6 +164,7 @@ class WebrtcInternalsAnalyzer:
                         pass
 
         self._webrtc_stats = pd.DataFrame.from_records(self._pc_stats)
+
         self._webrtc_events = pd.DataFrame.from_records(self._pc_events)
 
         self._media_stats = self.get_metrics_values(self._webrtc_stats)

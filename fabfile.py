@@ -11,8 +11,9 @@ import platform
 import socket
 from pytz import timezone
 from datetime import datetime, timedelta
-import webrtc_internals_analyzer as wia
+import src.webrtc_stats.analyzer as wia
 import pandas as pd
+
 
 DEFAULT_HOSTS = ["localhost"]
 DEFAULT_PATH = os.getcwd()
@@ -33,19 +34,36 @@ def get_stats_values(media_stats, stats_id, stats_name):
 
     return df
 
+
+@task(hosts=DEFAULT_HOSTS)
+def inbound_rtp_stats(c, file):
+    category="inbound-rtp"
+    stats_items = [
+                   "[bytesReceived_in_bits/s]"]
+
+    log_file = get_log_path(file)
+    analyzer = wia.WebrtcInternalsAnalyzer()
+    analyzer.parse(log_file)
+    stats_ids = analyzer.get_stats_ids(category)
+
 @task(hosts=DEFAULT_HOSTS)
 def candidate_pair_stats(c, file):
     """
     fab candidate-pair-stats -f samples/receiver_webrtc_internals_dump.txt
     """
-    log_file = get_log_path(file)
     category="candidate-pair"
+    stats_items = ["availableOutgoingBitrate",
+                   "availableIncomingBitrate",
+                   "[bytesSent_in_bits/s]",
+                   "[bytesReceived_in_bits/s]",
+                   "currentRoundTripTime"]
+
+    log_file = get_log_path(file)
     analyzer = wia.WebrtcInternalsAnalyzer()
     analyzer.parse(log_file)
     stats_ids = analyzer.get_stats_ids(category)
 
     media_stats = analyzer.get_media_stats()
-    stats_items = ["availableOutgoingBitrate","availableIncomingBitrate", "[bytesSent_in_bits/s]", "[bytesReceived_in_bits/s]", "currentRoundTripTime"]
     for stats_id in stats_ids:
         stats_key = f"{stats_id}-nominated"
 
