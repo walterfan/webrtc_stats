@@ -11,8 +11,10 @@ import platform
 import socket
 from pytz import timezone
 from datetime import datetime, timedelta
-import src.webrtc_stats.analyzer as wia
 import pandas as pd
+import src.webrtc_stats.analyzer as ws_analyzer
+import src.webrtc_stats.analyzer_util as ws_util
+from src.webrtc_stats.yaml_config import YamlConfig
 
 
 DEFAULT_HOSTS = ["localhost"]
@@ -30,26 +32,80 @@ def get_stats_values(media_stats, stats_id, stats_name):
     df = media_stats.get(stats_key, [])
     if len(df) == 0:
         return df
-    df['timestamp']=df['timestamp'].dt.strftime('%H:%M:%S')
+    #df['timestamp']=df['timestamp'].dt.strftime('%H:%M:%S')
 
     return df
 
 
 @task(hosts=DEFAULT_HOSTS)
-def inbound_rtp_stats(c, file):
-    category="inbound-rtp"
-    stats_items = [
-                   "[bytesReceived_in_bits/s]"]
+def local_ip(c):
+    print(ws_util.get_host_ip())
+
+@task(hosts=DEFAULT_HOSTS)
+def media_stats(c, file, type="inbound-rtp", name="[bytesReceived_in_bits/s]"):
+    """
+    usage: fab media-stats -f samples/receiver_webrtc_internals_dump.txt -t inbound-rtp -n [bytesReceived_in_bits/s]
+    """
+    log_file = get_log_path(file)
+    analyzer = ws_analyzer.WebrtcInternalsAnalyzer()
+    analyzer.parse(log_file)
+    stats_df = analyzer.get_stats_by_type_name(type, name)
+    print(stats_df)
+
+@task(hosts=DEFAULT_HOSTS)
+def rtp_stats(c, file, category, bitrate_item):
+    """
+    usage: fab rtp-stats -f samples/sender_webrtc_internals_dump.txt -c outbound-rtp -b "[bytesSent_in_bits/s]"
+    """
 
     log_file = get_log_path(file)
-    analyzer = wia.WebrtcInternalsAnalyzer()
+    analyzer = ws_analyzer.WebrtcInternalsAnalyzer()
     analyzer.parse(log_file)
     stats_ids = analyzer.get_stats_ids(category)
+
+    yamlConfig = YamlConfig("src/webrtc_stats/analyzer.yaml")
+    stats_items = yamlConfig.get_config().get("media_stats").get(category)
+
+    media_stats = analyzer.get_media_stats()
+    for stats_id in stats_ids:
+
+        bitrate_df = get_stats_values(media_stats, stats_id, bitrate_item)
+        if len(bitrate_df) == 0:
+            continue
+
+        print(f"\n# {category}: {stats_id}\n")
+
+        for stats_item in stats_items:
+            stats_df = get_stats_values(media_stats, stats_id, stats_item)
+            if len(stats_df) == 0:
+                continue
+            print(f"* {stats_id}-{stats_item}: ", stats_df.tail(10)["value"].values.tolist())
+
+
+@task(hosts=DEFAULT_HOSTS)
+def outbound_rtp_stats(c, file):
+    """
+    usage: fab outbound-rtp-stats -f samples/sender_webrtc_internals_dump.txt
+    """
+    category="outbound-rtp"
+    bitrate_item = "[bytesSent_in_bits/s]"
+
+    rtp_stats(c, file, category, bitrate_item)
+
+@task(hosts=DEFAULT_HOSTS)
+def inbound_rtp_stats(c, file):
+    """
+    usage: fab inbound-rtp-stats -f samples/receiver_webrtc_internals_dump.txt
+    """
+    category="inbound-rtp"
+    bitrate_item = "[bytesReceived_in_bits/s]"
+
+    rtp_stats(c, file, category, bitrate_item)
 
 @task(hosts=DEFAULT_HOSTS)
 def candidate_pair_stats(c, file):
     """
-    fab candidate-pair-stats -f samples/receiver_webrtc_internals_dump.txt
+    usage: fab candidate-pair-stats -f samples/receiver_webrtc_internals_dump.txt
     """
     category="candidate-pair"
     stats_items = ["availableOutgoingBitrate",
@@ -59,7 +115,7 @@ def candidate_pair_stats(c, file):
                    "currentRoundTripTime"]
 
     log_file = get_log_path(file)
-    analyzer = wia.WebrtcInternalsAnalyzer()
+    analyzer = ws_analyzer.WebrtcInternalsAnalyzer()
     analyzer.parse(log_file)
     stats_ids = analyzer.get_stats_ids(category)
 

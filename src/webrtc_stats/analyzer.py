@@ -12,9 +12,9 @@ import numpy as np
 import pandas as pd
 from ast import literal_eval
 from tabulate import tabulate
-from . import analyze_util
+from . import analyzer_util
 
-logger = analyze_util.get_logger(os.path.basename(__file__))
+logger = analyzer_util.get_logger(os.path.basename(__file__))
 
 def getWebrtcStatsTypes():
     statsTypes = "inbound-rtp,outbound-rtp,remote-inbound-rtp,transport,candidate-pair,local-candidate,remote-candidate"
@@ -52,7 +52,7 @@ def create_df_from_values(row):
         #print("all is zero")
         return df
 
-    time_points = generate_time_series(analyze_util.str2time(row["startTime"]), len(values))
+    time_points = generate_time_series(analyzer_util.str2time(row["startTime"]), len(values))
     df =  pd.DataFrame()
     df["timestamp"] = time_points
     df["value"] = values
