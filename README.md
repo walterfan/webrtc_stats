@@ -34,3 +34,18 @@ We need pay more attention to
 * H264 codec: level-asymmetry-allowed, max-br, max-dpb, max-fps, max-fs, max-mbps, packetization-mode, profile-level-id, id, etc.
 
 
+
+# Front end page
+
+A simple flask based app
+
+```
+virtualenv -p python3 venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+source ./venv/bin/activate
+export FLASK_DEBUG=1
+export FLASK_APP=app.py
+flask run --host=0.0.0.0 --port=8000 &
+```

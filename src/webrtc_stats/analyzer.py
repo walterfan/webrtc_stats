@@ -84,6 +84,15 @@ class WebrtcInternalsAnalyzer:
     def get_media_stats(self):
         return self._media_stats
 
+    def get_stats_values(self, stats_id, stats_name):
+        stats_key = f"{stats_id}-{stats_name}"
+
+        df = self._media_stats.get(stats_key, [])
+        if len(df) == 0:
+            return df
+
+        return df
+
     def get_webrtc_events(self):
         return self.get_webrtc_events
 

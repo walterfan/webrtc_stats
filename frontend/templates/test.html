@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block page_content %}
+
+
+    <!-- content start -->
+
+    <div class="page-header">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<h2>WebRTC Stats Pilot</h2>
+
+    <form action='/test' method='post'>
+        {{ form.csrf_token }}
+
+        <div class="form-group">
+            {{ form.input_content() }}
+        </div>
+
+        <div class="form-group">
+            <label for="test_command" class="col-sm-2">Command: </label>
+            <div class="form-group col-sm-4">{{ form.tool_command() }}</div>
+            <div class="form-group col-sm-6">{{ form.tool_parameters() }}</div>
+        </div>
+
+
+        <div class="form-group">
+            {{ form.output_content() }}
+        </div>
+
+        <div class="form-group">
+
+            <div class="form-group">{{ form.submit_button() }}</div>
+
+        </div>
+
+
+        <div class="form-group" lass="col-sm-10">
+            <div id="graph" style="text-align: center;"></div>
+        </div>
+
+
+    </form>
+
+
+</div> <!-- content end -->
+
+{% endblock %}
