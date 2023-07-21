@@ -2,9 +2,24 @@
 
 It is a python script to parse the dump file of webrtc-internals
 
-# Progress
+# Quick Start
 
-30%, will add a simple web app for query metrics and draw related chart
+```
+$ virtualenv -p python3 venv
+$ source venv/bin/activate
+$ pip install -r requirements.txt
+$ fab -l
+
+Available tasks:
+
+  candidate-pair-stats   usage: fab candidate-pair-stats -f samples/receiver_webrtc_internals_dump.txt
+  frontend
+  inbound-rtp-stats      usage: fab inbound-rtp-stats -f samples/receiver_webrtc_internals_dump.txt
+  local-ip
+  media-stats            usage:
+  outbound-rtp-stats     usage: fab outbound-rtp-stats -f samples/sender_webrtc_internals_dump.txt
+  rtp-stats              usage: fab rtp-stats -f samples/sender_webrtc_internals_dump.txt -c outbound-rtp -b "[bytesSent_in_bits/s]"
+```
 
 # Metrics
 
