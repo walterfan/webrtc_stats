@@ -49,9 +49,8 @@ def frontend(c):
 @task(hosts=DEFAULT_HOSTS)
 def media_stats(c, file, name, type="", id="", output=None):
     """
-    usage:
-    - fab media-stats -f samples/receiver_webrtc_internals_dump.txt -t inbound-rtp -n [bytesReceived_in_bits/s]
-    - fab media-stats -f $TA_LOG_DIR/10.224.34.19_webrtc_internals_dump.txt -n "[framesDecoded/s]"  -i IT01V3609914274
+    usage: fab media-stats -f samples/receiver_webrtc_internals_dump.txt -t inbound-rtp -n [bytesReceived_in_bits/s]
+    or fab media-stats -f $TA_LOG_DIR/10.224.34.19_webrtc_internals_dump.txt -n "[framesDecoded/s]"  -i IT01V3609914274
     """
     log_file = get_log_path(file)
     analyzer = ws_analyzer.WebrtcInternalsAnalyzer()
@@ -161,3 +160,13 @@ def candidate_pair_stats(c, file):
                 continue
             print(f"* {stats_id}-{stats_item}: ", stats_df.tail(6)["value"].values.tolist())
 
+
+@task(hosts=DEFAULT_HOSTS)
+def overview(c, file):
+    """
+    usage: fab overview -f samples/receiver_webrtc_internals_dump.txt
+    """
+    log_file = get_log_path(file)
+    analyzer = ws_analyzer.WebrtcInternalsAnalyzer()
+    analyzer.parse(log_file)
+    print(analyzer._webrtc_stats)

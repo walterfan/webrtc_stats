@@ -8,3 +8,8 @@ pytz==2021.3
 PyYAML==6.0
 setuptools==58.0.4
 tabulate==0.7.5
+flask_bootstrap
+flask_moment
+flask_pagedown
+flask_sqlalchemy
+flask_wt
